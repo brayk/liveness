@@ -1,0 +1,8 @@
+ X := 2
+Label1:
+ Y := X + 1
+ if Z > 8 goto Label2
+ X := 3
+ if Z > 8 goto Label3
+ if Z < 8 goto Label4
+ X := X + Y + Z 
