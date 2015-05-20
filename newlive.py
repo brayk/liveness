@@ -2,30 +2,30 @@ import sys, re, os
 
 
 class Node:
-    variable = None;
-    prev = set();
-    value = None;
-    type = None;
-    labelNumber = None;
-    gotoNumber = None;
-    liveBefore = set();
-    liveAfter = set();
+    variable = None
+    prev = set()
+    value = None
+    type = None
+    labelNumber = None
+    gotoNumber = None
+    liveBefore = set()
+    liveAfter = set()
     def __init__(self, ln, rv, t):
         self.value = ln
-        self.liveBefore.update(rv)
+        self.liveBefore = rv
         self.type = t
 
 class Block:
-    labelNumber = None;
-    headNode = None;
-    tailNode = None;
-    next = None;
+    labelNumber = None
+    headNode = None
+    tailNode = None
+    next = None
     nodes = []
 
 
 filename = sys.argv[1]
 
-nodes = [];
+nodes = []
 headNodes = {}
 
 curLine = 0
@@ -43,7 +43,7 @@ with open(filename, 'r') as f:
             readVariables = []
             readVariables.extend(expression)
             
-            node = Node(line, expression,"if")
+            node = Node(line, expression ,"if")
             node.gotoNumber = gotoLine
             nodes.append(node)
     #      print ">>CREATED TOKEN: IF goto " + token.gotoLabelNumber + " readings> " + str(token.readVariables)
@@ -77,7 +77,7 @@ with open(filename, 'r') as f:
                 expression.remove(expression[0])
                 readVariables = []
                 readVariables.extend(expression)
-
+            print(str(expression) + "FUCKING RIGHT HERE")
             node = Node(line, expression, "assign")
             node.variable = variable
             nodes.append(node)
@@ -89,7 +89,7 @@ with open(filename, 'r') as f:
             node = Node(line, expression, "LAST")
             nodes.append(node)
         print(str(node.liveBefore))
-        readVariables = []
+
 print(str(len(nodes)) + "***********************")
 
 count = 0
@@ -123,20 +123,27 @@ for node in nodes:
 #block previous and tail
 count = 0
 print(headNodes)
-    #for node in nodes:
-    #if(node.type is "assign"):
-    #   if(count+1 < len(nodes)):
-    #       nodes[count+1].prev.add(node)
+nodes.reverse()
+for node in nodes:
+    if(node.type is "assign"):
+        if(count+1 < len(nodes)):
+            nodes[count+1].prev.add(node)
 
-#    if(node.type is "if"):
-#       if(count+1 < len(nodes)):
-#           nodes[count+1].prev.add(node)
-#       print("GO TO: " + node.gotoNumber)
-#       headNodes[node.gotoNumber].prev.add(node)
 
-#   if(node.type is "goto"):
-#       headNodes[node.gotoNumber].prev.add(node)
+    if(node.type is "if"):
+        if(count+1 < len(nodes)):
+            nodes[count+1].prev.add(node)
+            print("GO TO: " + node.gotoNumber)
+        headNodes[node.gotoNumber].prev.add(node)
 
+    if(node.type is "goto"):
+        headNodes[node.gotoNumber].prev.add(node)
+    for after in node.liveAfter:
+        if(after not in node.liveBefore and after is not node.variable):
+            node.liveBefore.add(after)
+
+
+    count += 1
 
 
 
@@ -148,12 +155,13 @@ for node in nodes:
         if(node.variable is not None and node.variable in prevNode.liveAfter):
             prevNode.liveAfter.remove(node.variable)
         if(node.liveBefore is not None):
-            print(str(node.liveBefore) + " BEFORE UPDATE")
-            prevNode.liveAfter.update(node.liveBefore)
-            print(str(node.liveBefore) + " AFTER UPDATE")
+            print(str(prevNode.liveAfter) + " BEFORE UPDATE")
+            for before in node.liveBefore:
+                prevNode.liveAfter.add(before)
+            print(str(prevNode.liveAfter) + " AFTER UPDATE")
 
 print(nodes[0].prev)
-#nodes.reverse()
+nodes.reverse()
 for node in nodes:
     if(node.type is "label"):
         print(node.value.rstrip())
