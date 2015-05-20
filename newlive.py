@@ -54,7 +54,7 @@ with open(filename, 'r') as f:
             number = int(expression.group(0))
             print(number)
 
-            node = Node(line, set(), "label")
+            node = Node(line, [], "label")
             node.labelNumber = number
             nodes.append(node)
                 #   print ">>CREATED TOKEN: LABEL >" + str(token.number) + " at line" + str(token.lineNumber)
@@ -64,7 +64,7 @@ with open(filename, 'r') as f:
         if re.search('^ goto.', line):
             expression = re.search('(?<=Label)\d+', line)
             gotoLine = expression.group(0)
-            node = Node(line, set(), "goto")
+            node = Node(line, [], "goto")
             node.gotoNumber = gotoLine
             nodes.append(node)
                 #     print ">>CREATED TOKEN: IF goto " + token.gotoLabelNumber
@@ -123,7 +123,7 @@ for node in nodes:
 #block previous and tail
 count = 0
 print(headNodes)
-nodes.reverse()
+#nodes.reverse()
 for node in nodes:
     if(node.type is "assign"):
         if(count+1 < len(nodes)):
@@ -138,9 +138,7 @@ for node in nodes:
 
     if(node.type is "goto"):
         headNodes[node.gotoNumber].prev.add(node)
-    for after in node.liveAfter:
-        if(after not in node.liveBefore and after is not node.variable):
-            node.liveBefore.add(after)
+
 
 
     count += 1
@@ -148,17 +146,21 @@ for node in nodes:
 
 
 #count += 1
-#nodes.reverse()
+nodes.reverse()
 
 for node in nodes:
     for prevNode in node.prev:
+        print("node.variable is: " + str(node.variable) + " and prevNode.liveafter is: " + str(prevNode.liveAfter))
         if(node.variable is not None and node.variable in prevNode.liveAfter):
+            print("removing : " + str(node.variable) + " from" + str(prevNode.liveAfter) + " of " + str(node.value))
             prevNode.liveAfter.remove(node.variable)
         if(node.liveBefore is not None):
             print(str(prevNode.liveAfter) + " BEFORE UPDATE")
-            for before in node.liveBefore:
-                prevNode.liveAfter.add(before)
+            prevNode.liveAfter.update(node.liveBefore)
             print(str(prevNode.liveAfter) + " AFTER UPDATE")
+    for after in node.liveAfter:
+        if(after not in node.liveBefore and after is not node.variable):
+            node.liveBefore.append(after)
 
 print(nodes[0].prev)
 nodes.reverse()
